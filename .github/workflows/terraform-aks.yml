@@ -36,20 +36,20 @@ jobs:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform plan -out=tfplan
 
-      - name: Terraform destroy
+      - name: Terraform apply
         if: github.ref == 'refs/heads/main'
         working-directory: .
         env:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
-        run: terraform destroy -auto-approve
+        run: terraform apply -auto-approve tfplan
 
       - name: Get kubeconfig
         working-directory: .
         run: |
-          terraform output -raw kube_config > kubeconfig
           mkdir -p $HOME/.kube
-          mv kubeconfig $HOME/.kube/config
-
+          terraform output -raw kube_config | base64 --decode > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
         with:
