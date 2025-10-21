@@ -23,12 +23,11 @@ variable "node_vm_size" {
 }
 
 variable "ssh_public_key_path" {
-  default = "~/.ssh/id_rsa.pub"
 }
 
 variable "tags" {
   default = {
     environment = "dev"
-    project     = "Project_11_AKS_Cluster_with_Terraform"
+    project     = "Project_14_AKS_Cluster_with_Terraform"
   }
 }
