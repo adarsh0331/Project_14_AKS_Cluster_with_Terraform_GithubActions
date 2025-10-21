@@ -39,7 +39,7 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         working-directory: .
-        run: terraform apply -auto-approve tfplan
+        run: terraform destroy -auto-approve tfplan
 
       - name: Get kubeconfig
         working-directory: .
