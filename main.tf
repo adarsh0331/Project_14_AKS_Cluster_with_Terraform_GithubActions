@@ -30,9 +30,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     network_plugin = "azure"
   }
 
-  role_based_access_control {
-    enabled = true
-  }
+ role_based_access_control_enabled = true
 
   tags = var.tags
 }
