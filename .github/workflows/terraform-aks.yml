@@ -27,20 +27,20 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
-        working-directory: ./terraform
+        working-directory: .
         run: terraform init
 
       - name: Terraform Plan
-        working-directory: ./terraform
+        working-directory: .
         run: terraform plan -out=tfplan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        working-directory: ./terraform
+        working-directory: .
         run: terraform apply -auto-approve tfplan
 
       - name: Get kubeconfig
-        working-directory: ./terraform
+        working-directory: .
         run: |
           terraform output -raw kube_config > kubeconfig
           mkdir -p $HOME/.kube
