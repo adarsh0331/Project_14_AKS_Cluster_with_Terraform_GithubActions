@@ -47,7 +47,7 @@ jobs:
         working-directory: .
         run: |
           mkdir -p $HOME/.kube
-          terraform output -raw kube_config | base64 --decode > $HOME/.kube/config
+          terraform output -raw kube_config > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
           
       - name: Install kubectl
