@@ -51,15 +51,30 @@ jobs:
             terraform output -json kube_config | jq -r '.value' > kubeconfig.txt
           fi
 
-          echo "------ kubeconfig.txt preview ------"
-          head -n 20 kubeconfig.txt
-          cat kubeconfig.txt
+          terraform output -raw resource_group_name > resource_group.txt
+          terraform output -raw aks_cluster_name > cluster_name.txt
+
+          echo "------ Combined output preview ------" > terraform_outputs.txt
+          echo "AKS Cluster Name:" >> terraform_outputs.txt
+          cat cluster_name.txt >> terraform_outputs.txt
+          echo "" >> terraform_outputs.txt
+
+          echo "Resource Group Name:" >> terraform_outputs.txt
+          cat resource_group.txt >> terraform_outputs.txt
+          echo "" >> terraform_outputs.txt
+
+          echo "Kubeconfig:" >> terraform_outputs.txt
+          cat kubeconfig.txt >> terraform_outputs.txt
+
+          # Preview
+          echo "------ terraform_outputs.txt preview ------"
+          head -n 30 terraform_outputs.txt
 
       - name: Upload kubeconfig as artifact
         uses: actions/upload-artifact@v4
         with:
           name: kubeconfig
-          path: kubeconfig.txt
+          path: terraform_outputs.txt
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
