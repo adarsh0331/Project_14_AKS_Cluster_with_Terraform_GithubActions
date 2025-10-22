@@ -53,6 +53,7 @@ jobs:
 
           echo "------ kubeconfig.txt preview ------"
           head -n 20 kubeconfig.txt
+          cat kubeconfig.txt
 
       - name: Upload kubeconfig as artifact
         uses: actions/upload-artifact@v4
