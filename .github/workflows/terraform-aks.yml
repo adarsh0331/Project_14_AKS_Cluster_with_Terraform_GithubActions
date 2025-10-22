@@ -48,7 +48,7 @@ jobs:
         run: |
           terraform output -raw kube_config 
           echo "------ kubeconfig.txt preview ------"
-          head -n 20 kubeconfig.txt
+          head -n 20 kubeconfig
 
       
 
