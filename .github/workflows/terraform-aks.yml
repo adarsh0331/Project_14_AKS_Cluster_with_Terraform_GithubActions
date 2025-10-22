@@ -80,6 +80,16 @@ jobs:
         uses: azure/setup-kubectl@v4
         with:
           version: 'latest'
+      - name: Prepare kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          terraform output -json kube_config | jq -r '.value' > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Verify Cluster Connection
+        run: kubectl get nodes
+        env:
+         KUBECONFIG: $HOME/.kube/config
 
       - name: Verify Cluster Connection
         run: kubectl get nodes
