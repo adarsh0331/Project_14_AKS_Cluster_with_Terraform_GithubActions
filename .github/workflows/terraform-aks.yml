@@ -56,12 +56,6 @@ jobs:
           terraform output -raw kube_config > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
           
-      - name: Debug kubeconfig
-        run: |
-          echo "------ kubeconfig preview ------"
-          head -n 20 ~/.kube/config
-          echo "--------------------------------"
-          kubectl config view
     
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
