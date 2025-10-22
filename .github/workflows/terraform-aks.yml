@@ -41,28 +41,13 @@ jobs:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform apply -auto-approve tfplan
 
-      - name: Debug kubeconfig output
-        run: |
-          echo "------ kubeconfig preview (first 10 lines) ------"
-          terraform output -raw kube_config | head -n 10 || true
-
       - name: Get kubeconfig
+        working-directory: ./terraform
         run: |
-          mkdir -p ~/.kube
-          # Extract Terraform kubeconfig output
-          terraform output -raw kube_config > kube_raw.txt
-          
-          # Detect JSON vs YAML
-          if head -n 1 kube_raw.txt | grep '^\['; then
-            echo "Detected JSON array kubeconfig. Extracting..."
-            cat kube_raw.txt | jq -r '.[0].value // .[0]' > ~/.kube/config
-          else
-            echo "Detected YAML kubeconfig."
-            mv kube_raw.txt ~/.kube/config
-          fi
-
-          chmod 600 ~/.kube/config
-          echo "✅ kubeconfig written to ~/.kube/config"
+          terraform output -raw kube_config > kubeconfig
+          mkdir -p $HOME/.kube
+          mv kubeconfig $HOME/.kube/config
+      
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
