@@ -14,68 +14,70 @@ jobs:
       ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
     permissions:
       id-token: write
       contents: read
 
     steps:
+      # Checkout the repo
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.0
 
-      - name: Login to Azure
+      # Login to Azure using service principal credentials
+      - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Initialize Terraform
       - name: Terraform Init
-        working-directory: .
         run: terraform init
 
+      # Terraform Plan
       - name: Terraform Plan
-        working-directory: .
         env:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform plan -out=tfplan
 
-      - name: Terraform apply
+      # Terraform Apply
+      - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        working-directory: .
         env:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform apply -auto-approve tfplan
 
+      # Export kubeconfig (using admin config)
+      # ⚠️ Make sure your Terraform output uses:
+      # output "kube_config" { value = azurerm_kubernetes_cluster.aks.kube_admin_config_raw }
       - name: Get kubeconfig
-        working-directory: .
         run: |
-          mkdir -p $HOME/.kube
-          terraform output -raw kube_config > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-          
-    
+          mkdir -p ~/.kube
+          terraform output -raw kube_config > ~/.kube/config
+          chmod 600 ~/.kube/config
+          echo "✅ Kubeconfig file generated"
+
+      # Install kubectl CLI
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
         with:
-          version: 'latest'
+          version: latest
 
-      - name: Get AKS Credentials
-        id: getcreds
-        run: |
-          # Extract kubeconfig from Terraform output
-          echo "$(terraform output -raw kube_config)" > kubeconfig.yaml
-          mkdir -p ~/.kube
-          mv kubeconfig.yaml ~/.kube/config
-          chmod 600 ~/.kube/config
-
+      # Verify AKS connection
       - name: Verify Cluster Connection
         run: kubectl get nodes
 
-      - name: Deploy App to AKS
+      # Deploy application manifests
+      - name: Deploy Application
         run: |
+          echo "🚀 Deploying to AKS..."
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
+          echo "✅ Deployment applied successfully"
           kubectl get svc
