@@ -62,6 +62,18 @@ jobs:
         with:
           version: 'latest'
 
+      - name: Get AKS Credentials
+        id: getcreds
+        run: |
+          # Extract kubeconfig from Terraform output
+          echo "$(terraform output -raw kube_config)" > kubeconfig.yaml
+          mkdir -p ~/.kube
+          mv kubeconfig.yaml ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Verify Cluster Connection
+        run: kubectl get nodes
+
       - name: Deploy App to AKS
         run: |
           kubectl apply -f k8s/deployment.yaml
