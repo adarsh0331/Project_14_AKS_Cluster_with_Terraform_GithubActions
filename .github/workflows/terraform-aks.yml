@@ -82,8 +82,8 @@ jobs:
           version: 'latest'
       - name: Prepare kubeconfig
         run: |
-          mkdir -p ~/.kube
-          chmod 600 ~/.kube/config
+          mkdir -p $HOME/.kube
+          chmod 600 $HOME/.kube/config
 
       - name: Verify Cluster Connection
         run: kubectl get nodes
