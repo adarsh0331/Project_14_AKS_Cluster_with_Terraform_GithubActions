@@ -1,5 +1,13 @@
 terraform {
   required_version = ">= 1.5.0"
+
+    backend "azurerm" {
+    resource_group_name  = "adarsh_group"         # existing RG where your storage account is
+    storage_account_name = "tfstateaccountmind"  # your existing Storage Account name
+    container_name       = "tfstate"            # your blob container for tfstate
+    key                  = "terraform.tfstate"  # file name inside container
+  }
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
