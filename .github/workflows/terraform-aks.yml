@@ -43,9 +43,13 @@ jobs:
 
       - name: Get kubeconfig
         run: |
-          terraform output -raw kube_config > kubeconfig
-          mkdir -p $HOME/.kube
-          mv kubeconfig $HOME/.kube/config
+          terraform output -raw kube_config
+      - name: Save and print kubeconfig
+        run: |
+          terraform output -raw kube_config 
+          echo "------ kubeconfig.txt preview ------"
+          head -n 20 kubeconfig.txt
+
       
 
       - name: Install kubectl
