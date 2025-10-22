@@ -41,16 +41,24 @@ jobs:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform apply -auto-approve tfplan
 
-      - name: Get kubeconfig
-        run: |
-          terraform output -raw kube_config
       - name: Save and print kubeconfig
         run: |
-          terraform output -raw kube_config 
-          echo "------ kubeconfig.txt preview ------"
-          head -n 20 kubeconfig
+          echo "------ Extracting kube_config ------"
+          if terraform output -raw kube_config > kubeconfig.txt 2>/dev/null; then
+            echo "✅ Saved raw kubeconfig"
+          else
+            echo "⚠️ Raw output failed, falling back to JSON"
+            terraform output -json kube_config | jq -r '.value' > kubeconfig.txt
+          fi
 
-      
+          echo "------ kubeconfig.txt preview ------"
+          head -n 20 kubeconfig.txt
+
+      - name: Upload kubeconfig as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: kubeconfig
+          path: kubeconfig.txt
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
