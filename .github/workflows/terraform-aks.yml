@@ -8,83 +8,72 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-
     env:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
       ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
-    permissions:
-      id-token: write
-      contents: read
-
     steps:
-      # Checkout the repo
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.0
 
-      # Login to Azure using service principal credentials
-      - name: Azure Login
+      - name: Login to Azure
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Initialize Terraform
       - name: Terraform Init
         run: terraform init
 
-      # Terraform Plan
       - name: Terraform Plan
         env:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform plan -out=tfplan
 
-      # Terraform Apply
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
         env:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform apply -auto-approve tfplan
 
-      # Export kubeconfig (using admin config)
-      # ⚠️ Make sure your Terraform output uses:
-      # output "kube_config" { value = azurerm_kubernetes_cluster.aks.kube_admin_config_raw }
+      - name: Debug kubeconfig output
+        run: |
+          echo "------ kubeconfig preview (first 10 lines) ------"
+          terraform output -raw kube_config | head -n 10 || true
+
       - name: Get kubeconfig
         run: |
           mkdir -p ~/.kube
-          terraform output -raw kube_config > ~/.kube/config
-          chmod 600 ~/.kube/config
-          echo "✅ Kubeconfig file generated"
+          # Extract Terraform kubeconfig output
+          terraform output -raw kube_config > kube_raw.txt
+          
+          # Detect JSON vs YAML
+          if head -n 1 kube_raw.txt | grep '^\['; then
+            echo "Detected JSON array kubeconfig. Extracting..."
+            cat kube_raw.txt | jq -r '.[0].value // .[0]' > ~/.kube/config
+          else
+            echo "Detected YAML kubeconfig."
+            mv kube_raw.txt ~/.kube/config
+          fi
 
-      - name: Debug kubeconfig output
-        run: |
-          echo "------ kubeconfig preview ------"
-          terraform output -raw kube_config | head -n 20
-          echo "------ file format check ------"
-          terraform output -raw kube_config | head -n 1
-      
-      # Install kubectl CLI
+          chmod 600 ~/.kube/config
+          echo "✅ kubeconfig written to ~/.kube/config"
+
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
         with:
-          version: latest
+          version: 'latest'
 
-      # Verify AKS connection
       - name: Verify Cluster Connection
         run: kubectl get nodes
 
-      # Deploy application manifests
-      - name: Deploy Application
+      - name: Deploy App to AKS
         run: |
-          echo "🚀 Deploying to AKS..."
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
-          echo "✅ Deployment applied successfully"
           kubectl get svc
