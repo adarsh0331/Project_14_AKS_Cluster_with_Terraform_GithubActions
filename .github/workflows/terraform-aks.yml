@@ -63,6 +63,13 @@ jobs:
           chmod 600 ~/.kube/config
           echo "✅ Kubeconfig file generated"
 
+      - name: Debug kubeconfig output
+        run: |
+          echo "------ kubeconfig preview ------"
+          terraform output -raw kube_config | head -n 20
+          echo "------ file format check ------"
+          terraform output -raw kube_config | head -n 1
+      
       # Install kubectl CLI
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
