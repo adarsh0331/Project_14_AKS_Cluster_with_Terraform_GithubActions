@@ -36,10 +36,10 @@ jobs:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
         run: terraform plan -out=tfplan
 
-      - name: Terraform Apply
+      - name: Terraform destroy
         env:
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
-        run: terraform apply -auto-approve tfplan
+        run: terraform destroy -auto-approve
 
       - name: Save and print kubeconfig
         run: |
